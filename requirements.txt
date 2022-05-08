@@ -1,4 +1,4 @@
 loguru
 peewee
 pysqlite3
-
+pysnooper

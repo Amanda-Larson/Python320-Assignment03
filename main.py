@@ -5,7 +5,6 @@
 """
 import csv
 
-import socialnetworkmodel
 import user_status
 import users
 import socialnetworkmodel as sn
@@ -28,6 +27,7 @@ def init_status_collection():
     status = user_status.UserStatusCollection
     return status
 
+
 # @pysnooper.snoop
 def load_users(filename):
     """
@@ -39,9 +39,6 @@ def load_users(filename):
     - If a user_id already exists, it
     will ignore it and continue to the
     next.
-    - Returns False if there are any errors
-    (such as empty fields in the source CSV file)
-    - Otherwise, it returns True.
     """
     users.UserCollection.db_connect()
     try:
@@ -65,36 +62,7 @@ def load_users(filename):
         print('File not found')
 
 
-def save_users(user_collection):
-    """
-    Saves all users in user_collection into
-    a database table
-
-    Requirements:
-    - If there is an existing file, it will
-    overwrite it.
-    - Returns False if there are any errors
-    (such as an invalid filename).
-    - Otherwise, it returns True.
-    """
-
-    for user in users.UserCollection: #This gives an error about not being iterable
-        try:
-            with sn.db.transaction():
-                new_user = user_collection.create(
-                    user_id=user[0],
-                    email=user[1],
-                    user_name=user[2],
-                    user_last_name=user[3], )
-                new_user.save()
-                logger.info('Got to here')
-
-        except Exception as e:
-            logger.info(f'Error creating user = {user[0]}')
-            logger.info(e)
-
-
-def load_status_updates(filename, status_collection):
+def load_status_updates(filename):
     """
     Opens a CSV file with status data and adds it to an existing
     instance of UserStatusCollection
@@ -106,25 +74,26 @@ def load_status_updates(filename, status_collection):
       source CSV file)
     - Otherwise, it returns True.
     """
+
+    user_status.UserStatusCollection.db_connect()
     try:
         with open(filename, newline='', encoding="UTF-8") as file:
-            file_users = csv.DictReader(file)
-            for row in file_users:
-                status_collection.add_status(row['STATUS_ID'], row['USER_ID'],
-                                             row['STATUS_TEXT'])
+            file_status = csv.DictReader(file)
+            for row in file_status:
+                try:
+                    with sn.db.transaction():
+                        new_status = user_status.UserStatusCollection.create(
+                            user_id=row['USER_ID'],
+                            status_id=row['STATUS_ID'],
+                            status_text=row['STATUS_TEXT'])
+                        new_status.save()
+                        logger.info('Got to here')
+
+                except Exception as e:
+                    logger.info('Error creating status')
+                    logger.info(e)
     except FileNotFoundError:
         print('File not found')
-
-
-def save_status_updates(filename, status_collection):
-    """
-    Saves all statuses in status_collection into a CSV file
-
-    Requirements:
-    - If there is an existing file, it will overwrite it.
-    - Returns False if there are any errors(such an invalid filename).
-    - Otherwise, it returns True.
-    """
 
 
 def add_user(user_id, email, user_name, user_last_name, user_collection):
@@ -139,6 +108,7 @@ def add_user(user_id, email, user_name, user_last_name, user_collection):
     - Otherwise, it returns True.
     """
     new_user = user_collection.add_user(user_id, email, user_name, user_last_name)
+    user_collection.save()
     return new_user
 
 
@@ -151,6 +121,7 @@ def update_user(user_id, email, user_name, user_last_name, user_collection):
     - Otherwise, it returns True.
     """
     updated_user = user_collection.modify_user(user_id, email, user_name, user_last_name)
+    user_collection.save()
     return updated_user
 
 
@@ -163,6 +134,7 @@ def delete_user(user_id, user_collection):
     - Otherwise, it returns True.
     """
     del_user = user_collection.delete_user(user_id)
+    user_collection.save()
     return del_user
 
 

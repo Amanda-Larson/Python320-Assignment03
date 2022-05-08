@@ -11,36 +11,6 @@ logger.info("Let's get to debugging user_status/py")
 logger.add("users_and_status.log", backtrace=True, diagnose=True)
 
 
-class UserStatus:
-    """
-    class to hold status message data
-    """
-    #
-    logger.info("notice peewee data type")
-
-    user_id = pw.ForeignKeyField(u.UserCollection, related_name='the user', null=False)
-    status_id = pw.CharField(primary_key=True)
-    status_text = pw.CharField()
-
-    # def __init__(self, status_id, user_id, status_text):
-    #     self.status_id = status_id
-    #     self.user_id = user_id
-    #     self.status_text = status_text
-    #     logger.info("Object instantiated")
-
-
-def add_status(status_id, user_id, status_text):
-    """
-    add a new status message to the collection
-    """
-    if status_id in [UserStatusCollection]:
-        logger.info("Rejects new status if status_id already exists")
-        return False
-    new_status = (status_id, user_id, status_text)
-    sn.db[status_id] = new_status
-    return True
-
-
 class UserStatusCollection(sn.BaseModel):
     """
     Collection of UserStatus messages
@@ -54,11 +24,23 @@ class UserStatusCollection(sn.BaseModel):
 
     @staticmethod
     def db_connect():
-
         logger.info("Set up the database.")
-        sn.db.connect()
+        # sn.db.connect()
         sn.db.execute_sql('PRAGMA foreign_keys = ON;')
         sn.db.create_tables([UserStatusCollection])
+        logger.info('db is connected')
+
+    @staticmethod
+    def add_status(status_id, user_id, status_text):
+        """
+        add a new status message to the collection
+        """
+        if status_id in [UserStatusCollection]:
+            logger.info("Rejects new status if status_id already exists")
+            return False
+        new_status = (status_id, user_id, status_text)
+        sn.db[status_id] = new_status
+        return True
 
     @staticmethod
     def modify_status(status_id, user_id, status_text):
@@ -68,18 +50,18 @@ class UserStatusCollection(sn.BaseModel):
         The new user_id and status_text are assigned to the existing message
         """
         if status_id not in [UserStatusCollection]:
-            logger.info("Status_id does not exist")
+            logger.info("Status_id {status_id} does not exist")
             return False
-        [UserStatusCollection][0].user_id = user_id
-        [UserStatusCollection][0].status_text = status_text
+        [UserStatusCollection].user_id = user_id
+        [UserStatusCollection].status_text = status_text
         return True
 
     def delete_status(self, status_id):
         """
         deletes the status message with id, status_id
         """
-        if status_id not in self.database:
-            logger.info("Failed - status does not exist")
+        if status_id not in [UserStatusCollection]:
+            logger.info(f"Failed - status ({status_id}) does not exist")
             return False
         del self.database[status_id]
         return True

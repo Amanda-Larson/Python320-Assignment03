@@ -11,29 +11,9 @@ logger.info("Let's get to debugging users.py")
 logger.add("users_and_status.log", backtrace=True, diagnose=True)
 
 
-#
-# class Users(sn.BaseModel):
-#     """
-#     Contains user information
-#     """
-
-
-# def __init__(self, user_id, email, user_name, user_last_name):
-#     self.user_id = user_id
-#     self.user_name = user_name
-#     self.user_last_name = user_last_name
-#     self.email = email
-#     logger.info("User class instantiated")
-
-# def show(self):
-#     """display an instance"""
-#     print(self.user_id, self.user_name, self.user_last_name)
-#     print(type(self.user_name))
-
-
 class UserCollection(sn.BaseModel):
     """
-    Contains a collection of Users objects
+    Contains a collection of Users
     """
 
     logger.info("notice peewee data type")
@@ -67,12 +47,12 @@ class UserCollection(sn.BaseModel):
         """
         Modifies an existing user
         """
-        if user_id not in sn.db:
+        if user_id not in [UserCollection]:
             logger.info(f'{user_id} not in the database')
             return False
-        sn.db[user_id].email = email
-        sn.db[user_id].user_name = user_name
-        sn.db[user_id].user_last_name = user_last_name
+        [UserCollection].email = email
+        [UserCollection].user_name = user_name
+        [UserCollection].user_last_name = user_last_name
         return True
 
 
@@ -81,7 +61,7 @@ class UserCollection(sn.BaseModel):
         """
         Deletes an existing user
         """
-        if user_id not in self.database:
+        if user_id not in [UserCollection]:
             logger.info(f'{user_id} not in the database')
             return False
         del self.database[user_id]

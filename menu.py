@@ -6,12 +6,11 @@ from loguru import logger
 import pysnooper
 import main
 
-
 logger.info("Let's get to debugging")
 logger.add("out.log", backtrace=True, diagnose=True)
 
 
-@pysnooper.snoop(depth=2)
+# @pysnooper.snoop(depth=2)
 def load_users():
     """
     Loads user accounts from a file
@@ -20,12 +19,13 @@ def load_users():
     main.load_users(filename)
 
 
+# @pysnooper.snoop(depth=2)
 def load_status_updates():
     """
     Loads status updates from a file
     """
     filename = input('Enter filename for status file: ')
-    main.load_status_updates(filename, status_collection)
+    main.load_status_updates(filename)
 
 
 # @pysnooper.snoop()
@@ -93,13 +93,13 @@ def delete_user():
         print("User was successfully deleted")
 
 
-@pysnooper.snoop(depth=3)
-def save_users():
-    """
-    Saves user database into a file
-    """
-    # filename = input('Enter filename for users file: ')
-    main.save_users(user_collection)
+# @pysnooper.snoop(depth=3)
+# def save_users():
+#     """
+#     Saves user database into a file
+#     """
+#     # filename = input('Enter filename for users file: ')
+#     main.save_users(user_collection)
 
 
 # @pysnooper.snoop()
@@ -157,8 +157,6 @@ def delete_status():
         print("Status was successfully deleted")
 
 
-
-
 def quit_program():
     """
     Quits program
@@ -176,10 +174,10 @@ if __name__ == '__main__':
         'D': update_user,
         'E': search_user,
         'F': delete_user,
-        'H': add_status,
-        'I': update_status,
-        'J': search_status,
-        'K': delete_status,
+        'G': add_status,
+        'H': update_status,
+        'I': search_status,
+        'J': delete_status,
         'Q': quit_program
     }
 
@@ -191,12 +189,10 @@ if __name__ == '__main__':
                             D: Update user
                             E: Search user
                             F: Delete user
-                            G: Save user database to file
-                            H: Add status
-                            I: Update status
-                            J: Search status
-                            K: Delete status
-                            L: Save status database to file
+                            G: Add status
+                            H: Update status
+                            I: Search status
+                            J: Delete status
                             Q: Quit
 
                             Please enter your choice: """)
