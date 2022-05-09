@@ -66,14 +66,14 @@ def update_user():
         logger.exception("NEW EXCEPTION! - Look here!")
 
 
-@pysnooper.snoop(depth=2)
+# @pysnooper.snoop(depth=2)
 def search_user():
     """
     Searches a user in the database
     """
     user_id = input('Enter user ID to search: ')
     result = main.search_user(user_id)
-    if not result.user_id:
+    if not result:
         print("ERROR: User does not exist")
     else:
         print(f"User ID: {result.user_id}")

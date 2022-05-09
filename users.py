@@ -71,9 +71,9 @@ class UserCollection(sn.BaseModel):
         del_user.delete_instance()
         return del_user
 
-    del_user = users.UserCollection.select().where(users.UserCollection.user_id == user_id).get()
-    del_user.delete_instance()
-    return del_user
+        del_user = users.UserCollection.select().where(users.UserCollection.user_id == user_id).get()
+        del_user.delete_instance()
+        return del_user
 
     @staticmethod
     def search_user(user_id):
@@ -88,6 +88,9 @@ class UserCollection(sn.BaseModel):
         #     logger.info(e)
         # user_search = UserCollection.get(UserCollection.user_id == user_id)
         # return user_search
-
-    find_user = users.UserCollection.select().where(users.UserCollection.user_id == user_id).get()
-    return find_user
+        try:
+            find_user = users.UserCollection.select().where(users.UserCollection.user_id == user_id).get()
+            return find_user
+        except pw.DoesNotExist:
+            # logger.info(e)
+            print('User does not exist, please try again.')

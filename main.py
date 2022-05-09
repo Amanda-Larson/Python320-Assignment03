@@ -218,5 +218,7 @@ def search_status(status_id):
     UserStatus instance.
     - Otherwise, it returns None.
     """
-    find_status = user_status.UserStatusCollection.search_status(status_id)
-    return find_status
+    if user_status.UserStatusCollection.search_status(status_id) is None:
+        return False
+    else:
+        return user_status.UserStatusCollection.search_status(status_id)
