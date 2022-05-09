@@ -5,6 +5,8 @@ import sys
 from loguru import logger
 import pysnooper
 import main
+import users
+import user_status
 
 logger.info("Let's get to debugging")
 logger.add("out.log", backtrace=True, diagnose=True)
@@ -19,7 +21,7 @@ def load_users():
     main.load_users(filename)
 
 
-# @pysnooper.snoop(depth=2)
+@pysnooper.snoop(depth=2)
 def load_status_updates():
     """
     Loads status updates from a file
@@ -40,9 +42,8 @@ def add_user():
     if not main.add_user(user_id,
                          email,
                          user_name,
-                         user_last_name,
-                         user_collection):
-        print("An error occurred while trying to add new user")
+                         user_last_name):
+        print("Added users must be unique - please try a different user id")
     else:
         print("User was successfully added")
 
@@ -57,7 +58,7 @@ def update_user():
     user_name = input('User name: ')
     user_last_name = input('User last name: ')
     try:
-        if not main.update_user(user_id, email, user_name, user_last_name, user_collection):
+        if not main.update_user(user_id, email, user_name, user_last_name):
             print("An error occurred while trying to update user")
         else:
             print("User was successfully updated")
@@ -65,13 +66,13 @@ def update_user():
         logger.exception("NEW EXCEPTION! - Look here!")
 
 
-# @pysnooper.snoop()
+@pysnooper.snoop(depth=2)
 def search_user():
     """
     Searches a user in the database
     """
     user_id = input('Enter user ID to search: ')
-    result = main.search_user(user_id, user_collection)
+    result = main.search_user(user_id)
     if not result.user_id:
         print("ERROR: User does not exist")
     else:
@@ -87,7 +88,7 @@ def delete_user():
     Deletes user from the database
     """
     user_id = input('User ID: ')
-    if not main.delete_user(user_id, user_collection):
+    if not main.delete_user(user_id):
         print("An error occurred while trying to delete user")
     else:
         print("User was successfully deleted")
@@ -110,7 +111,7 @@ def add_status():
     user_id = input('User ID: ')
     status_id = input('Status ID: ')
     status_text = input('Status text: ')
-    if not main.add_status(status_id, user_id, status_text, status_collection):
+    if not main.add_status(status_id, user_id, status_text):
         print("An error occurred while trying to add new status")
     else:
         print("New status was successfully added")
@@ -124,7 +125,7 @@ def update_status():
     user_id = input('User ID: ')
     status_id = input('Status ID: ')
     status_text = input('Status text: ')
-    if not main.update_status(status_id, user_id, status_text, status_collection):
+    if not main.update_status(status_id, user_id, status_text):
         print("An error occurred while trying to update status")
     else:
         print("Status was successfully updated")
@@ -136,7 +137,7 @@ def search_status():
     Searches a status in the database
     """
     status_id = input('Enter status ID to search: ')
-    result = main.search_status(status_id, status_collection)
+    result = main.search_status(status_id)
     if not result.status_id:
         print("ERROR: Status does not exist")
     else:
@@ -166,7 +167,10 @@ def quit_program():
 
 if __name__ == '__main__':
     # user_collection = main.init_user_collection()
+    users.UserCollection.db_connect()
+    user_status.UserStatusCollection.db_connect()
     # status_collection = main.init_status_collection()
+
     menu_options = {
         'A': load_users,
         'B': load_status_updates,

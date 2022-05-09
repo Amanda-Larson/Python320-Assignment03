@@ -10,6 +10,8 @@ import users
 import socialnetworkmodel as sn
 from loguru import logger
 import pysnooper
+import peewee as pw
+
 
 
 def init_user_collection():
@@ -40,7 +42,7 @@ def load_users(filename):
     will ignore it and continue to the
     next.
     """
-    users.UserCollection.db_connect()
+    # users.UserCollection.db_connect()
     try:
         with open(filename, newline='', encoding="UTF-8") as file:
             file_users = csv.DictReader(file)
@@ -53,7 +55,7 @@ def load_users(filename):
                             user_name=row['NAME'],
                             user_last_name=row['LASTNAME'])
                         new_user.save()
-                        logger.info('Got to here')
+
 
                 except Exception as e:
                     logger.info(f'Error creating user')
@@ -62,6 +64,7 @@ def load_users(filename):
         print('File not found')
 
 
+# @pysnooper.snoop(depth=2)
 def load_status_updates(filename):
     """
     Opens a CSV file with status data and adds it to an existing
@@ -75,28 +78,48 @@ def load_status_updates(filename):
     - Otherwise, it returns True.
     """
 
-    user_status.UserStatusCollection.db_connect()
+# this doesn't work but if it did, it would be faster
     try:
         with open(filename, newline='', encoding="UTF-8") as file:
-            file_status = csv.DictReader(file)
-            for row in file_status:
-                try:
-                    with sn.db.transaction():
-                        new_status = user_status.UserStatusCollection.create(
-                            user_id=row['USER_ID'],
-                            status_id=row['STATUS_ID'],
-                            status_text=row['STATUS_TEXT'])
-                        new_status.save()
-                        logger.info('Got to here')
-
-                except Exception as e:
-                    logger.info('Error creating status')
-                    logger.info(e)
+            a = [{k.lower(): v for k, v in row.items()}
+                 for row in csv.DictReader(file, skipinitialspace=True)]
     except FileNotFoundError:
-        print('File not found')
+        logger.info('File not found...')
+
+    try:
+        with sn.db.atomic():
+            for idx in range(0, len(a), 999):
+                user_status.UserStatusCollection.insert_many(a[idx:idx + 999]).execute()
+    except Exception as e:
+        logger.info('Did not add statuses to the database.')
+        logger.info(e)
 
 
-def add_user(user_id, email, user_name, user_last_name, user_collection):
+# # this works, but it is very slow vv
+#     user_status.UserStatusCollection.db_connect()
+#     try:
+#         with open(filename, newline='', encoding="UTF-8") as file:
+#             file_status = csv.DictReader(file)
+#             for row in file_status:
+#                 try:
+#                     with sn.db.transaction():
+#                         new_status = user_status.UserStatusCollection.create(
+#                             user_id=row['USER_ID'],
+#                             status_id=row['STATUS_ID'],
+#                             status_text=row['STATUS_TEXT'])
+#                         new_status.save()
+#                         logger.info('Got to here')
+#
+#                 except Exception as e:
+#                     logger.info('Error creating status')
+#                     logger.info(e)
+#     except FileNotFoundError:
+#         print('File not found')
+
+
+
+
+def add_user(user_id, email, user_name, user_last_name):
     """
     Creates a new instance of User and stores it in user_collection
     (which is an instance of UserCollection)
@@ -107,8 +130,8 @@ def add_user(user_id, email, user_name, user_last_name, user_collection):
       user_collection.add_user() returns False).
     - Otherwise, it returns True.
     """
-    new_user = user_collection.add_user(user_id, email, user_name, user_last_name)
-    user_collection.save()
+    new_user = users.UserCollection.add_user(user_id, email, user_name, user_last_name)
+    # users.UserCollection.save()
     return new_user
 
 
@@ -125,7 +148,7 @@ def update_user(user_id, email, user_name, user_last_name, user_collection):
     return updated_user
 
 
-def delete_user(user_id, user_collection):
+def delete_user(user_id):
     """
     Deletes a user from user_collection.
 
@@ -133,12 +156,12 @@ def delete_user(user_id, user_collection):
     - Returns False if there are any errors (such as user_id not found)
     - Otherwise, it returns True.
     """
-    del_user = user_collection.delete_user(user_id)
-    user_collection.save()
+    del_user = users.UserCollection.select().where(users.UserCollection.user_id == user_id).get()
+    del_user.delete_instance()
     return del_user
 
 
-def search_user(user_id, user_collection):
+def search_user(user_id):
     """
     Searches for a user in user_collection(which is an instance of
     UserCollection).
@@ -147,11 +170,11 @@ def search_user(user_id, user_collection):
     - If the user is found, returns the corresponding User instance.
     - Otherwise, it returns None.
     """
-    find_user = user_collection.search_user(user_id)
+    find_user = users.UserCollection.select().where(users.UserCollection.user_id == user_id).get()
     return find_user
 
 
-def add_status(status_id, user_id, status_text, status_collection):
+def add_status(status_id, user_id, status_text):
     """
     Creates a new instance of UserStatus and stores it in
     user_collection(which is an instance of UserStatusCollection)
@@ -162,11 +185,12 @@ def add_status(status_id, user_id, status_text, status_collection):
       user_collection.add_status() returns False).
     - Otherwise, it returns True.
     """
-    add_new_status = status_collection.add_status(status_id, user_id, status_text)
+    add_new_status = user_status.UserStatusCollection.create(status_id=status_id, user_id=user_id,
+                                                             status_text=status_text)
     return add_new_status
 
 
-def update_status(status_id, user_id, status_text, status_collection):
+def update_status(status_id, user_id, status_text):
     """
     Updates the values of an existing status_id
 
@@ -178,7 +202,7 @@ def update_status(status_id, user_id, status_text, status_collection):
     return updated_status
 
 
-def delete_status(status_id, status_collection):
+def delete_status(status_id):
     """
     Deletes a status_id from user_collection.
 
@@ -190,7 +214,7 @@ def delete_status(status_id, status_collection):
     return del_status
 
 
-def search_status(status_id, status_collection):
+def search_status(status_id):
     """
     Searches for a status in status_collection
 
@@ -199,5 +223,6 @@ def search_status(status_id, status_collection):
     UserStatus instance.
     - Otherwise, it returns None.
     """
-    find_status = status_collection.search_status(status_id)
+    find_status = user_status.UserStatusCollection.select().where(
+        user_status.UserStatusCollection.user_id == user_id).get()
     return find_status
