@@ -28,7 +28,7 @@ class UserCollection(sn.BaseModel):
     def db_connect():
         logger.info("Set up the database.")
         sn.db.connect()
-        sn.db.execute_sql('PRAGMA foreign_keys = ON;')
+        # sn.db.execute_sql('PRAGMA foreign_keys = ON;')
         sn.db.create_tables([UserCollection])
         logger.info('db is connected, UserCollection table is created')
 
@@ -67,22 +67,27 @@ class UserCollection(sn.BaseModel):
         """
         Deletes an existing user
         """
-        if user_id not in UserCollection:
-            logger.info(f'{user_id} not in the database')
-            return False
-        del self.database[user_id]
-        return True
+        del_user = users.UserCollection.select().where(users.UserCollection.user_id == user_id).get()
+        del_user.delete_instance()
+        return del_user
+
+    del_user = users.UserCollection.select().where(users.UserCollection.user_id == user_id).get()
+    del_user.delete_instance()
+    return del_user
 
     @staticmethod
     def search_user(user_id):
         """
         Searches for user data
         """
-        try:
-            if UserCollection.user_id not in UserCollection:
-                logger.info(f'{user_id} not in the database')
-                return None
-        except pw.DoesNotExist as e:
-            logger.info(e)
-        user_search = UserCollection.get(UserCollection.user_id == user_id)
-        return user_search
+        # try:
+        #     if UserCollection.user_id not in UserCollection:
+        #         logger.info(f'{user_id} not in the database')
+        #         return None
+        # except pw.DoesNotExist as e:
+        #     logger.info(e)
+        # user_search = UserCollection.get(UserCollection.user_id == user_id)
+        # return user_search
+
+    find_user = users.UserCollection.select().where(users.UserCollection.user_id == user_id).get()
+    return find_user

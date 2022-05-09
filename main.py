@@ -13,7 +13,6 @@ import pysnooper
 import peewee as pw
 
 
-
 def init_user_collection():
     """
     Creates and returns a new instance of UserCollection
@@ -78,7 +77,7 @@ def load_status_updates(filename):
     - Otherwise, it returns True.
     """
 
-# this doesn't work but if it did, it would be faster
+    # this doesn't work but if it did, it would be faster
     try:
         with open(filename, newline='', encoding="UTF-8") as file:
             a = [{k.lower(): v for k, v in row.items()}
@@ -88,8 +87,8 @@ def load_status_updates(filename):
 
     try:
         with sn.db.atomic():
-            for idx in range(0, len(a), 999):
-                user_status.UserStatusCollection.insert_many(a[idx:idx + 999]).execute()
+            for idx in range(0, len(a), 100):
+                user_status.UserStatusCollection.insert_many(a[idx:idx + 100]).execute()
     except Exception as e:
         logger.info('Did not add statuses to the database.')
         logger.info(e)
@@ -117,8 +116,6 @@ def load_status_updates(filename):
 #         print('File not found')
 
 
-
-
 def add_user(user_id, email, user_name, user_last_name):
     """
     Creates a new instance of User and stores it in user_collection
@@ -143,7 +140,7 @@ def update_user(user_id, email, user_name, user_last_name, user_collection):
     - Returns False if there are any errors.
     - Otherwise, it returns True.
     """
-    updated_user = user_collection.modify_user(user_id, email, user_name, user_last_name)
+    updated_user = users.UserCollection.modify_user(user_id, email, user_name, user_last_name)
     user_collection.save()
     return updated_user
 
@@ -156,8 +153,7 @@ def delete_user(user_id):
     - Returns False if there are any errors (such as user_id not found)
     - Otherwise, it returns True.
     """
-    del_user = users.UserCollection.select().where(users.UserCollection.user_id == user_id).get()
-    del_user.delete_instance()
+    del_user = users.UserCollection.delete_user(user_id)
     return del_user
 
 
@@ -170,7 +166,7 @@ def search_user(user_id):
     - If the user is found, returns the corresponding User instance.
     - Otherwise, it returns None.
     """
-    find_user = users.UserCollection.select().where(users.UserCollection.user_id == user_id).get()
+    find_user = users.UserCollection.search_user(user_id)
     return find_user
 
 
@@ -185,8 +181,7 @@ def add_status(status_id, user_id, status_text):
       user_collection.add_status() returns False).
     - Otherwise, it returns True.
     """
-    add_new_status = user_status.UserStatusCollection.create(status_id=status_id, user_id=user_id,
-                                                             status_text=status_text)
+    add_new_status = user_status.UserStatusCollection.add_status(status_id, user_id, status_text)
     return add_new_status
 
 
@@ -198,7 +193,7 @@ def update_status(status_id, user_id, status_text):
     - Returns False if there any errors.
     - Otherwise, it returns True.
     """
-    updated_status = status_collection.modify_status(status_id, user_id, status_text)
+    updated_status = user_status.UserStatusCollection.modify_status(status_id, user_id, status_text)
     return updated_status
 
 
@@ -210,7 +205,7 @@ def delete_status(status_id):
     - Returns False if there are any errors (such as status_id not found)
     - Otherwise, it returns True.
     """
-    del_status = status_collection.delete_status(status_id)
+    del_status = user_status.UserStatusCollection.delete_status(status_id)
     return del_status
 
 
@@ -223,6 +218,5 @@ def search_status(status_id):
     UserStatus instance.
     - Otherwise, it returns None.
     """
-    find_status = user_status.UserStatusCollection.select().where(
-        user_status.UserStatusCollection.user_id == user_id).get()
+    find_status = user_status.UserStatusCollection.search_status(status_id)
     return find_status

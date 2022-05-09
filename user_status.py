@@ -18,7 +18,7 @@ class UserStatusCollection(sn.BaseModel):
 
     logger.info("notice peewee data type")
 
-    user_id = pw.ForeignKeyField(u.UserCollection, related_name='the user', null=False)
+    user_id = pw.ForeignKeyField(u.UserCollection, to_field='user_id', related_name='the user', null=False)
     status_id = pw.CharField(primary_key=True)
     status_text = pw.CharField()
 
@@ -26,7 +26,7 @@ class UserStatusCollection(sn.BaseModel):
     def db_connect():
         logger.info("Set up the database.")
         # sn.db.connect()
-        sn.db.execute_sql('PRAGMA foreign_keys = ON;')
+        # sn.db.execute_sql('PRAGMA foreign_keys = ON;')
         sn.db.create_tables([UserStatusCollection])
         logger.info('db is connected')
 
@@ -56,7 +56,8 @@ class UserStatusCollection(sn.BaseModel):
         [UserStatusCollection].status_text = status_text
         return True
 
-    def delete_status(self, status_id):
+    @staticmethod
+    def delete_status(status_id):
         """
         deletes the status message with id, status_id
         """
@@ -66,14 +67,22 @@ class UserStatusCollection(sn.BaseModel):
         del self.database[status_id]
         return True
 
-    def search_status(self, status_id):
+    @staticmethod
+    def search_status(status_id):
         """
         Find and return a status message by its status_id
 
         Returns an empty UserStatus object if status_id does not exist
         """
-        if status_id not in self.database:
-            logger.info("Failed - status does not exist")
-            return UserStatus(None, None, None)
-            # return False
-        return self.database[status_id]
+        try:
+            if UserStatusCollection.status_id not in UserStatusCollection:
+                logger.info("Failed - status does not exist")
+                return None
+        except pw.DoesNotExist as e:
+            logger.info(e)
+        status_search = UserStatusCollection.get(UserStatusCollection.status_id == status_id)
+        return status_search
+
+    # find_status = user_status.UserStatusCollection.select().where(
+    #     user_status.UserStatusCollection.status_id == status_id).get()
+    # return find_status
