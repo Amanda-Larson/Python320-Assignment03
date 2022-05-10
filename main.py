@@ -4,13 +4,10 @@
 # What/When: 4/24/2022 - started assignment
 """
 import csv
-
+from loguru import logger
 import user_status
 import users
 import socialnetworkmodel as sn
-from loguru import logger
-import pysnooper
-import peewee as pw
 
 
 def init_user_collection():
@@ -56,9 +53,9 @@ def load_users(filename):
                         new_user.save()
 
 
-                except Exception as e:
-                    logger.info(f'Error creating user')
-                    logger.info(e)
+                except Exception as error:
+                    logger.info('Error creating user')
+                    logger.info(error)
     except FileNotFoundError:
         print('File not found')
 
@@ -77,21 +74,21 @@ def load_status_updates(filename):
     - Otherwise, it returns True.
     """
 
-    # this doesn't work but if it did, it would be faster
+    # i spent 4 hours trying to make it faster and this is actually slower - takes 4 minutes
     try:
         with open(filename, newline='', encoding="UTF-8") as file:
-            a = [{k.lower(): v for k, v in row.items()}
-                 for row in csv.DictReader(file, skipinitialspace=True)]
+            dict_table = [{k.lower(): v for k, v in row.items()}
+                          for row in csv.DictReader(file, skipinitialspace=True)]
     except FileNotFoundError:
         logger.info('File not found...')
 
     try:
         with sn.db.atomic():
-            for idx in range(0, len(a), 100):
-                user_status.UserStatusCollection.insert_many(a[idx:idx + 100]).execute()
-    except Exception as e:
+            for idx in range(0, len(dict_table), 100):
+                user_status.UserStatusCollection.insert_many(dict_table[idx:idx + 100]).execute()
+    except Exception as error:
         logger.info('Did not add statuses to the database.')
-        logger.info(e)
+        logger.info(error)
 
 
 # # this works, but it is very slow vv
@@ -132,7 +129,7 @@ def add_user(user_id, email, user_name, user_last_name):
     return new_user
 
 
-def update_user(user_id, email, user_name, user_last_name, user_collection):
+def update_user(user_id, email_update, user_name_update, user_last_name_update):
     """
     Updates the values of an existing user
 
@@ -140,8 +137,12 @@ def update_user(user_id, email, user_name, user_last_name, user_collection):
     - Returns False if there are any errors.
     - Otherwise, it returns True.
     """
-    updated_user = users.UserCollection.modify_user(user_id, email, user_name, user_last_name)
-    user_collection.save()
+    updated_user = users.UserCollection.modify_user(user_id,
+                                                    email_update,
+                                                    user_name_update,
+                                                    user_last_name_update
+                                                    )
+    # updated_user.save()
     return updated_user
 
 
@@ -220,5 +221,5 @@ def search_status(status_id):
     """
     if user_status.UserStatusCollection.search_status(status_id) is None:
         return False
-    else:
-        return user_status.UserStatusCollection.search_status(status_id)
+
+    return user_status.UserStatusCollection.search_status(status_id)

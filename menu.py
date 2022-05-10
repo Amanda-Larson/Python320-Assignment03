@@ -21,12 +21,14 @@ def load_users():
     main.load_users(filename)
 
 
-@pysnooper.snoop(depth=2)
+# @pysnooper.snoop(depth=2)
 def load_status_updates():
     """
     Loads status updates from a file
     """
+
     filename = input('Enter filename for status file: ')
+    print('Loading...')
     main.load_status_updates(filename)
 
 
@@ -39,13 +41,15 @@ def add_user():
     email = input('User email: ')
     user_name = input('User name: ')
     user_last_name = input('User last name: ')
-    if not main.add_user(user_id,
-                         email,
-                         user_name,
-                         user_last_name):
-        print("Added users must be unique - please try a different user id")
-    else:
+    if not users.UserCollection.search_user(user_id=user_id) is None:
+        print('Added users must be unique - please try a different user id.')
+    elif main.add_user(user_id,
+                     email,
+                     user_name,
+                     user_last_name):
         print("User was successfully added")
+    else:
+        print("Unknown error")
 
 
 # @pysnooper.snoop()
@@ -54,12 +58,14 @@ def update_user():
     Updates information for an existing user
     """
     user_id = input('User ID: ')
-    email = input('User email: ')
-    user_name = input('User name: ')
-    user_last_name = input('User last name: ')
+    email_update = input('User email: ')
+    user_name_update = input('User name: ')
+    user_last_name_update = input('User last name: ')
     try:
-        if not main.update_user(user_id, email, user_name, user_last_name):
+        if not main.update_user(user_id, email_update, user_name_update, user_last_name_update):
             print("An error occurred while trying to update user")
+        elif users.UserCollection.search_user(user_id=user_id) is None:
+            print('This user does not exist yet, please add the user first.')
         else:
             print("User was successfully updated")
     except TypeError:
@@ -90,6 +96,8 @@ def delete_user():
     user_id = input('User ID: ')
     if not main.delete_user(user_id):
         print("An error occurred while trying to delete user")
+    elif users.UserCollection.search_user(user_id=user_id) is None:
+        print('This user does not exist yet, please add the user first.')
     else:
         print("User was successfully deleted")
 
@@ -102,8 +110,7 @@ def delete_user():
 #     # filename = input('Enter filename for users file: ')
 #     main.save_users(user_collection)
 
-
-# @pysnooper.snoop()
+# @pysnooper.snoop(depth=2)
 def add_status():
     """
     Adds a new status into the database
@@ -113,6 +120,8 @@ def add_status():
     status_text = input('Status text: ')
     if not main.add_status(status_id, user_id, status_text):
         print("An error occurred while trying to add new status")
+    elif users.UserCollection.search_user(user_id=user_id) is None:
+        print('This user does not exist yet, please add the user first.')
     else:
         print("New status was successfully added")
 
@@ -127,18 +136,20 @@ def update_status():
     status_text = input('Status text: ')
     if not main.update_status(status_id, user_id, status_text):
         print("An error occurred while trying to update status")
+    elif users.UserCollection.search_user(user_id=user_id) is None:
+        print('This user does not exist yet, please add the user first.')
     else:
         print("Status was successfully updated")
 
 
-# @pysnooper.snoop(depth=3)
+# @pysnooper.snoop(depth=2)
 def search_status():
     """
     Searches a status in the database
     """
     status_id = input('Enter status ID to search: ')
     result = main.search_status(status_id)
-    if not result.status_id:
+    if not result:
         print("ERROR: Status does not exist")
     else:
         print(f"User ID: {result.user_id}")
@@ -152,7 +163,7 @@ def delete_status():
     Deletes status from the database
     """
     status_id = input('Status ID: ')
-    if not main.delete_status(status_id, status_collection):
+    if not main.delete_status(status_id):
         print("An error occurred while trying to delete status")
     else:
         print("Status was successfully deleted")

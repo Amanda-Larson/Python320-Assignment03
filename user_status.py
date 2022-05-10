@@ -4,7 +4,8 @@ classes to manage the user status messages
 # pylint: disable=R0903
 from loguru import logger
 import peewee as pw
-import users as u
+
+import users
 import socialnetworkmodel as sn
 
 logger.info("Let's get to debugging user_status/py")
@@ -18,12 +19,14 @@ class UserStatusCollection(sn.BaseModel):
 
     logger.info("notice peewee data type")
 
-    user_id = pw.ForeignKeyField(u.UserCollection, to_field='user_id', related_name='the user', null=False)
+    user_id = pw.ForeignKeyField(users.UserCollection, to_field='user_id',
+                                 related_name='the user', null=False)
     status_id = pw.CharField(primary_key=True)
     status_text = pw.CharField()
 
     @staticmethod
     def db_connect():
+        """This connects the database and creates the table"""
         logger.info("Set up the database.")
         # sn.db.connect()
         # sn.db.execute_sql('PRAGMA foreign_keys = ON;')
@@ -35,12 +38,15 @@ class UserStatusCollection(sn.BaseModel):
         """
         add a new status message to the collection
         """
-        if status_id in [UserStatusCollection]:
-            logger.info("Rejects new status if status_id already exists")
-            return False
-        new_status = (status_id, user_id, status_text)
-        sn.db[status_id] = new_status
-        return True
+        if users.UserCollection.user_id is not None:
+            try:
+                add_new_status = UserStatusCollection.create(status_id=status_id, user_id=user_id,
+                                                             status_text=status_text)
+                return add_new_status
+            except Exception as e:
+                logger.info(e)
+        else:
+            raise pw.DoesNotExist
 
     @staticmethod
     def modify_status(status_id, user_id, status_text):
@@ -49,11 +55,11 @@ class UserStatusCollection(sn.BaseModel):
 
         The new user_id and status_text are assigned to the existing message
         """
-        if status_id not in [UserStatusCollection]:
+        if status_id not in UserStatusCollection.status_id:
             logger.info("Status_id {status_id} does not exist")
             return False
-        [UserStatusCollection].user_id = user_id
-        [UserStatusCollection].status_text = status_text
+        UserStatusCollection.user_id = user_id
+        UserStatusCollection.status_text = status_text
         return True
 
     @staticmethod
@@ -61,11 +67,10 @@ class UserStatusCollection(sn.BaseModel):
         """
         deletes the status message with id, status_id
         """
-        if status_id not in [UserStatusCollection]:
-            logger.info(f"Failed - status ({status_id}) does not exist")
-            return False
-        del self.database[status_id]
-        return True
+        del_status = UserStatusCollection.select().where(
+            UserStatusCollection.status_id == status_id).get()
+        del_status.delete_instance()
+        return del_status
 
     @staticmethod
     def search_status(status_id):
@@ -75,14 +80,9 @@ class UserStatusCollection(sn.BaseModel):
         Returns an empty UserStatus object if status_id does not exist
         """
         try:
-            if UserStatusCollection.status_id not in UserStatusCollection:
-                logger.info("Failed - status does not exist")
-                return None
-        except pw.DoesNotExist as e:
-            logger.info(e)
-        status_search = UserStatusCollection.get(UserStatusCollection.status_id == status_id)
-        return status_search
-
-    # find_status = user_status.UserStatusCollection.select().where(
-    #     user_status.UserStatusCollection.status_id == status_id).get()
-    # return find_status
+            find_status = UserStatusCollection.select().where(
+                UserStatusCollection.status_id == status_id).get()
+            return find_status
+        except pw.DoesNotExist:
+            # logger.info(e)
+            print('Status ID does not exist, please try again.')
