@@ -21,8 +21,10 @@ class UserCollection(sn.BaseModel):
 
     user_id = pw.CharField(primary_key=True, max_length=30,
                            constraints=[pw.Check("LENGTH(user_id) < 30")])
-    user_name = pw.CharField(max_length=30)
-    user_last_name = pw.CharField(max_length=100)
+    user_name = pw.CharField(max_length=30,
+                             constraints=[pw.Check("LENGTH(user_id) < 30")])
+    user_last_name = pw.CharField(max_length=100,
+                                  constraints=[pw.Check("LENGTH(user_id) < 30")])
     email = pw.CharField()
 
     @staticmethod
@@ -46,8 +48,8 @@ class UserCollection(sn.BaseModel):
                                              user_last_name=user_last_name)
             new_user.save()
             return True
-        except pw.IntegrityError as e:
-            logger.info(e)
+        except pw.IntegrityError as error:
+            logger.info(error)
             return False
 
     @staticmethod

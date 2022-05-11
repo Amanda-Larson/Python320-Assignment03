@@ -22,7 +22,7 @@ class UserStatusCollection(sn.BaseModel):
     user_id = pw.ForeignKeyField(users.UserCollection, to_field='user_id',
                                  related_name='the user', null=False)
     status_id = pw.CharField(primary_key=True)
-    status_text = pw.CharField()
+    status_text = pw.CharField(max_length=140, constraints=[pw.Check("LENGTH(user_id) < 30")])
 
     @staticmethod
     def db_connect():
